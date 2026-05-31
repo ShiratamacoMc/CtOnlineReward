@@ -63,9 +63,9 @@ startup:
 # 在线时长查询
 time:
   header: '<green>========== <bold>在线时长统计</bold> ==========</green>'
-  day: '<yellow>今日在线:</yellow> <white>{time}</white>'
-  week: '<yellow>本周在线:</yellow> <white>{time}</white>'
-  month: '<yellow>本月在线:</yellow> <white>{time}</white>'
-  all: '<yellow>总计在线:</yellow> <white>{time}</white>'
+  day: '<yellow>今日在线:</yellow> <white><time></white>'
+  week: '<yellow>本周在线:</yellow> <white><time></white>'
+  month: '<yellow>本月在线:</yellow> <white><time></white>'
+  all: '<yellow>总计在线:</yellow> <white><time></white>'
   footer: '<green>============================</green>'
   error: '<red>查询在线时长失败，请稍后再试</red>'

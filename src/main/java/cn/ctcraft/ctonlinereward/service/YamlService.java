@@ -30,6 +30,9 @@ public class YamlService {
     }
 
     public boolean loadGuiYaml() throws IOException, InvalidConfigurationException {
+        // 清空旧的GUI配置数据，确保reload时能正确更新
+        YamlData.guiYaml.clear();
+        
         Map<String, YamlConfiguration> guiYaml = YamlData.guiYaml;
         Path folderPath = Paths.get(ctOnlineReward.getDataFolder().getPath(), "gui");
         if (!Files.exists(folderPath)) {
@@ -57,10 +60,8 @@ public class YamlService {
     }
 
     public boolean loadRewardYaml() {
-        // 初始化 rewardYaml
-        if (YamlData.rewardYaml == null) {
-            YamlData.rewardYaml = new YamlConfiguration();
-        }
+        // 重新创建 rewardYaml 对象，确保reload时能正确更新
+        YamlData.rewardYaml = new YamlConfiguration();
         
         YamlConfiguration rewardYaml = YamlData.rewardYaml;
         Path filePath = Paths.get(ctOnlineReward.getDataFolder().getPath(), "reward.yml");
@@ -80,6 +81,7 @@ public class YamlService {
 
     public boolean loadRemindJson() {
         YamlConfiguration rewardYaml = YamlData.rewardYaml;
+        // 清空旧的提醒数据，确保reload时能正确更新
         YamlData.remindJson = new JsonArray();
         Set<String> keys = rewardYaml.getKeys(false);
         keys.stream()

@@ -84,7 +84,7 @@ public final class CtOnlineReward extends JavaPlugin {
             getLogger().warning("[CtOnlineReward] 初始化Vault失败.");
         }
 
-        OnlineTimer.getInstance().runTaskTimerAsynchronously(this, 1200, 1200);
+        OnlineTimer.getInstance().start();
 
         boolean afk = getConfig().getBoolean("Setting.afkConfig.use");
         if (afk) {
@@ -93,13 +93,13 @@ public final class CtOnlineReward extends JavaPlugin {
             if (string.equalsIgnoreCase("strong")) {
                 AfkService.getInstance().openStrongMode();
             }
-            new AfkTimer().runTaskTimerAsynchronously(this, 0, time * 60 * 20);
+            new AfkTimer().start(time);
         }
         
         boolean onlineRemind = getConfig().getBoolean("Setting.remind.use");
         if (onlineRemind) {
             int anInt = getConfig().getInt("Setting.remind.time");
-            new RemindTimer().runTaskTimerAsynchronously(this, anInt * 60 * 20, anInt * 60 * 20);
+            new RemindTimer().start(anInt);
         }
 
         boolean useTimeLimit = getConfig().getBoolean("Setting.timeLimit.use");
@@ -116,6 +116,8 @@ public final class CtOnlineReward extends JavaPlugin {
     }
 
     public void load() {
+        // 重载配置文件
+        reloadConfig();
         saveDefaultConfig();
 
         // 先加载语言文件

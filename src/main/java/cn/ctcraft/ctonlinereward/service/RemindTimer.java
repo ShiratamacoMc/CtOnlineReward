@@ -4,6 +4,7 @@ import cn.ctcraft.ctonlinereward.CtOnlineReward;
 import cn.ctcraft.ctonlinereward.database.YamlData;
 import cn.ctcraft.ctonlinereward.service.rewardHandler.RewardOnlineTimeHandler;
 import cn.ctcraft.ctonlinereward.utils.MessageUtil;
+import cn.ctcraft.ctonlinereward.utils.SchedulerAdapter;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -12,12 +13,13 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.util.*;
 
-public class RemindTimer extends BukkitRunnable {
+public class RemindTimer implements Runnable {
     private final CtOnlineReward ctOnlineReward;
+    private BukkitTask task;
     //每轮检查时已经提醒过的玩家的名单
      public static List<Player> players = new ArrayList<>();
 
@@ -25,6 +27,25 @@ public class RemindTimer extends BukkitRunnable {
         ctOnlineReward = CtOnlineReward.getPlugin(CtOnlineReward.class);
     }
 
+    /**
+     * 启动定时器
+     */
+    public void start(int intervalMinutes) {
+        if (task != null && !task.isCancelled()) {
+            task.cancel();
+        }
+        long intervalTicks = intervalMinutes * 60 * 20L; // 分钟转换为 tick
+        task = SchedulerAdapter.runTaskTimerAsynchronously(ctOnlineReward, this, intervalTicks, intervalTicks);
+    }
+
+    /**
+     * 停止定时器
+     */
+    public void stop() {
+        if (task != null && !task.isCancelled()) {
+            task.cancel();
+        }
+    }
 
     @Override
     public void run() {

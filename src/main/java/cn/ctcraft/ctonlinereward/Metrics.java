@@ -173,7 +173,14 @@ public class Metrics {
                 }
                 // Nevertheless we want our code to run in the Bukkit main thread, so we have to use the Bukkit scheduler
                 // Don't be afraid! The connection to the bStats server is still async, only the stats collection is sync ;)
-                Bukkit.getScheduler().runTask(plugin, () -> submitData());
+                try {
+                    // 尝试使用 SchedulerAdapter，如果失败则回退到 Bukkit 调度器
+                    Class.forName("cn.ctcraft.ctonlinereward.utils.SchedulerAdapter");
+                    cn.ctcraft.ctonlinereward.utils.SchedulerAdapter.runTask(plugin, () -> submitData());
+                } catch (ClassNotFoundException e) {
+                    // 回退到 Bukkit 调度器
+                    Bukkit.getScheduler().runTask(plugin, () -> submitData());
+                }
             }
         }, 1000 * 60 * 5, 1000 * 60 * 30);
         // Submit the data every 30 minutes, first time after 5 minutes to give other plugins enough time to start

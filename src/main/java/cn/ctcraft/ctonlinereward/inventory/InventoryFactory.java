@@ -15,7 +15,8 @@ import com.cryptomorin.xseries.XMaterial;
 import com.cryptomorin.xseries.profiles.builder.XSkull;
 import com.cryptomorin.xseries.profiles.objects.Profileable;
 import me.clip.placeholderapi.PlaceholderAPI;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.adventure.platform.bukkit.BukkitComponentSerializer;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.SkullType;
@@ -80,8 +81,9 @@ public class InventoryFactory {
         YamlConfiguration yamlConfiguration = guiYaml.get(inventoryId);
         String name = yamlConfiguration.getString("name");
         int size = yamlConfiguration.getInt("slot");
-        // 将 MiniMessage 转换为 Legacy 格式用于库存标题
-        String legacyTitle = LegacyComponentSerializer.legacySection().serialize(MessageUtil.parse(name));
+        // 使用 Adventure 原生支持 MiniMessage
+        Component titleComponent = MessageUtil.parse(name);
+        String legacyTitle = BukkitComponentSerializer.legacy().serialize(titleComponent);
         Inventory inventory = Bukkit.createInventory(mainInventoryHolder, size, legacyTitle);
         addItemStack(inventory, yamlConfiguration);
         mainInventoryHolder.inventoryID = inventoryId;
@@ -326,17 +328,19 @@ public class InventoryFactory {
         if (config.contains("name")) {
             String name = config.getString("name");
             String s = PlaceholderAPI.setPlaceholders(player, name);
-            // 将 MiniMessage 转换为 Legacy 格式用于物品名称
-            String legacyName = LegacyComponentSerializer.legacySection().serialize(MessageUtil.parse(s));
+            // 使用 Adventure 原生支持 MiniMessage，完整支持 RGB 颜色
+            Component nameComponent = MessageUtil.parse(s);
+            String legacyName = BukkitComponentSerializer.legacy().serialize(nameComponent);
             itemMeta.setDisplayName(legacyName);
         }
         if (config.contains("lore")) {
             List<String> lore = config.getStringList("lore");
             List<String> processedLore = PlaceholderAPI.setPlaceholders(player, lore);
-            // 将 MiniMessage 转换为 Legacy 格式用于物品描述
+            // 使用 Adventure 原生支持 MiniMessage，完整支持 RGB 颜色
             List<String> legacyLore = new ArrayList<>();
             for (String line : processedLore) {
-                legacyLore.add(LegacyComponentSerializer.legacySection().serialize(MessageUtil.parse(line)));
+                Component lineComponent = MessageUtil.parse(line);
+                legacyLore.add(BukkitComponentSerializer.legacy().serialize(lineComponent));
             }
             itemMeta.setLore(legacyLore);
         }

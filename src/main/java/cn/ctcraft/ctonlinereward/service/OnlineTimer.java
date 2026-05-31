@@ -7,19 +7,21 @@ import cn.ctcraft.ctonlinereward.pojo.OnlineRemind;
 import cn.ctcraft.ctonlinereward.service.afk.AfkService;
 import cn.ctcraft.ctonlinereward.utils.ConfigUtil;
 import cn.ctcraft.ctonlinereward.utils.MessageUtil;
+import cn.ctcraft.ctonlinereward.utils.SchedulerAdapter;
 import cn.ctcraft.ctonlinereward.utils.Util;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class OnlineTimer extends BukkitRunnable {
+public class OnlineTimer implements Runnable {
     private static HashMap<UUID, Long> onlinePlayerTime = new HashMap<>();
     private static OnlineTimer instance = new OnlineTimer();
     private DataService dataService = CtOnlineReward.dataService;
     private CtOnlineReward ctOnlineReward = CtOnlineReward.getPlugin(CtOnlineReward.class);
+    private BukkitTask task;
     
     // 缓存配置，避免每次循环都读取
     private List<OnlineRemind> onlineRemindList = null;
@@ -60,6 +62,25 @@ public class OnlineTimer extends BukkitRunnable {
 
     public static void removeOnlinePlayer(Player player) {
         onlinePlayerTime.remove(player.getUniqueId());
+    }
+
+    /**
+     * 启动定时器
+     */
+    public void start() {
+        if (task != null && !task.isCancelled()) {
+            task.cancel();
+        }
+        task = SchedulerAdapter.runTaskTimerAsynchronously(ctOnlineReward, this, 1200, 1200);
+    }
+
+    /**
+     * 停止定时器
+     */
+    public void stop() {
+        if (task != null && !task.isCancelled()) {
+            task.cancel();
+        }
     }
 
     @Override

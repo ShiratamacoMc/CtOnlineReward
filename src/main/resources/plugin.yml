@@ -3,6 +3,7 @@ version: ${project.version}
 main: cn.ctcraft.ctonlinereward.CtOnlineReward
 author: MagicBili
 softdepend: [PlaceholderAPI,PlayerPoints,Vault]
+folia-supported: true
 commands:
   cor:
     description: CtOnlineReward Main Command

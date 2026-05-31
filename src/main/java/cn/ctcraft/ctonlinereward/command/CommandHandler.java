@@ -4,6 +4,7 @@ import cn.ctcraft.ctonlinereward.CtOnlineReward;
 import cn.ctcraft.ctonlinereward.database.DataMigration;
 import cn.ctcraft.ctonlinereward.service.RemindTimer;
 import cn.ctcraft.ctonlinereward.utils.MessageUtil;
+import cn.ctcraft.ctonlinereward.utils.SchedulerAdapter;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -125,7 +126,7 @@ public class CommandHandler implements CommandExecutor {
         MessageUtil.sendLang(sender, "migration.start-old-tables");
         String dbType = ctOnlineReward.getConfig().getString("database.type", "sqlite");
         
-        ctOnlineReward.getServer().getScheduler().runTaskAsynchronously(ctOnlineReward, () -> {
+        SchedulerAdapter.runTaskAsynchronously(ctOnlineReward, () -> {
             try {
                 DataMigration migration = new DataMigration();
                 if (dbType.equalsIgnoreCase("mysql")) {
@@ -145,7 +146,7 @@ public class CommandHandler implements CommandExecutor {
     private void migrateYamlData(CommandSender sender) {
         MessageUtil.sendLang(sender, "migration.start-yaml");
         
-        ctOnlineReward.getServer().getScheduler().runTaskAsynchronously(ctOnlineReward, () -> {
+        SchedulerAdapter.runTaskAsynchronously(ctOnlineReward, () -> {
             try {
                 DataMigration migration = new DataMigration();
                 int count = migration.migrateYamlToDatabase();
@@ -162,7 +163,7 @@ public class CommandHandler implements CommandExecutor {
     private void dropOldTables(CommandSender sender) {
         MessageUtil.sendLang(sender, "migration.drop-start");
         
-        ctOnlineReward.getServer().getScheduler().runTaskAsynchronously(ctOnlineReward, () -> {
+        SchedulerAdapter.runTaskAsynchronously(ctOnlineReward, () -> {
             try {
                 DataMigration migration = new DataMigration();
                 migration.dropOldTables();
@@ -176,7 +177,7 @@ public class CommandHandler implements CommandExecutor {
     }
     
     private void showOnlineTime(Player player) {
-        ctOnlineReward.getServer().getScheduler().runTaskAsynchronously(ctOnlineReward, () -> {
+        SchedulerAdapter.runTaskAsynchronously(ctOnlineReward, () -> {
             try {
                 int dayTime = CtOnlineReward.dataService.getPlayerOnlineTime(player);
                 int weekTime = CtOnlineReward.dataService.getPlayerOnlineTimeWeek(player);
@@ -184,7 +185,7 @@ public class CommandHandler implements CommandExecutor {
                 int allTime = CtOnlineReward.dataService.getPlayerOnlineTimeAll(player);
                 
                 // 同步发送消息
-                ctOnlineReward.getServer().getScheduler().runTask(ctOnlineReward, () -> {
+                SchedulerAdapter.runTask(ctOnlineReward, () -> {
                     MessageUtil.sendLang(player, "time.header");
                     MessageUtil.sendLang(player, "time.day", 
                         MessageUtil.placeholders("time", formatTime(dayTime)));
@@ -197,7 +198,7 @@ public class CommandHandler implements CommandExecutor {
                     MessageUtil.sendLang(player, "time.footer");
                 });
             } catch (Exception e) {
-                ctOnlineReward.getServer().getScheduler().runTask(ctOnlineReward, () -> {
+                SchedulerAdapter.runTask(ctOnlineReward, () -> {
                     MessageUtil.sendLang(player, "time.error");
                 });
                 e.printStackTrace();

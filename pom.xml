@@ -6,7 +6,7 @@
 
     <groupId>cn.ctcraft</groupId>
     <artifactId>CtOnlineReward</artifactId>
-    <version>1.0.0-fork</version>
+    <version>1.0.1-fork</version>
     <packaging>jar</packaging>
 
     <name>CtOnlineReward</name>
@@ -105,6 +105,10 @@
         <repository>
             <id>taboolib</id>
             <url>https://repo.tabooproject.org/repository/releases</url>
+        </repository>
+        <repository>
+            <id>papermc</id>
+            <url>https://repo.papermc.io/repository/maven-public/</url>
         </repository>
     </repositories>
 
@@ -278,6 +282,12 @@
             <artifactId>adventure-platform-bukkit</artifactId>
             <version>4.3.0</version>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.papermc.paper</groupId>
+            <artifactId>paper-api</artifactId>
+            <version>1.20.1-R0.1-SNAPSHOT</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>

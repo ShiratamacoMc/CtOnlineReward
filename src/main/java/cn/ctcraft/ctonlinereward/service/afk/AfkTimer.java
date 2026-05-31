@@ -1,20 +1,42 @@
 package cn.ctcraft.ctonlinereward.service.afk;
 
 import cn.ctcraft.ctonlinereward.CtOnlineReward;
+import cn.ctcraft.ctonlinereward.utils.SchedulerAdapter;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.util.*;
 
-public class AfkTimer extends BukkitRunnable {
+public class AfkTimer implements Runnable {
     private static CtOnlineReward ctOnlineReward = CtOnlineReward.getPlugin(CtOnlineReward.class);
     private Map<String, Map<String, Double>> locationMap = new HashMap<>();
     private AfkService afkService = AfkService.getInstance();
     private boolean strong = AfkService.getInstance().isStrongMode();
+    private BukkitTask task;
+
+    /**
+     * 启动定时器
+     */
+    public void start(int intervalMinutes) {
+        if (task != null && !task.isCancelled()) {
+            task.cancel();
+        }
+        long intervalTicks = intervalMinutes * 60 * 20L; // 分钟转换为 tick
+        task = SchedulerAdapter.runTaskTimerAsynchronously(ctOnlineReward, this, 0, intervalTicks);
+    }
+
+    /**
+     * 停止定时器
+     */
+    public void stop() {
+        if (task != null && !task.isCancelled()) {
+            task.cancel();
+        }
+    }
 
     @Override
     public void run() {

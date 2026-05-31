@@ -1,8 +1,8 @@
-name: '<red>在线奖励菜单</red>'
+name: '<gradient:#ff0000:#ffff00>在线奖励菜单</gradient>'
 slot: 27
 values:
   10min:
-    name: '<green>在线十分钟奖励</green>'
+    name: '<#00ff00>在线十分钟奖励</#00ff00>'
     type:
       name: 'minecraft:glass_bottle'
       #是否打开附魔  部分物品会出现问题，请提前测试
@@ -10,7 +10,8 @@ values:
     #可选 设置物品的自定义模型数据.
     #customModelData: 1
     lore:
-      - '<green><underlined>十分钟在线奖励</underlined></green>'
+      - '<gradient:#00ff00:#00ffff><underlined>十分钟在线奖励</underlined></gradient>'
+      - '<#ffff00>支持RGB颜色显示</#ffff00>'
     index:
       x: 2
       y: 2
@@ -24,21 +25,22 @@ values:
           #是否打开附魔  部分物品会出现问题，请提前测试
           enchantment: false
         lore:
-          - '<gray>当前在线时间: <white><underlined>%CtOnlineReward_onlinetime%分钟</underlined></white></gray>'
+          - '<gray>当前在线时间: <#00ff00><underlined>%CtOnlineReward_onlinetime%分钟</underlined></#00ff00></gray>'
         #可选 设置物品的自定义模型数据.
         #customModelData: 1
       activation:
-        name: '<green>在线十分钟奖励[待领取]</green>'
+        name: '<gradient:#00ff00:#ffff00>在线十分钟奖励[待领取]</gradient>'
         type:
           name: 'minecraft:experience_bottle'
           #是否打开附魔  部分物品会出现问题，请提前测试
           enchantment: true
         lore:
-          - '<green>已达到领取条件,点击领取</green>'
+          - '<#00ff00>已达到领取条件,点击领取</#00ff00>'
+          - '<rainbow>彩虹色提示</rainbow>'
         #可选 设置物品的自定义模型数据.
         #customModelData: 1
       after:
-        name: '<red>在线十分钟奖励[已领取]</red>'
+        name: '<#ff3300>在线十分钟奖励[已领取]</#ff3300>'
         type:
           name: 'minecraft:glass_bottle'
           #是否打开附魔  部分物品会出现问题，请提前测试
