@@ -1,12 +1,11 @@
 package cn.ctcraft.ctonlinereward.utils;
 
 import cn.ctcraft.ctonlinereward.CtOnlineReward;
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Entity;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
 
-import java.lang.reflect.Method;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -14,42 +13,14 @@ import java.util.concurrent.TimeUnit;
  */
 public class SchedulerAdapter {
     private static final boolean IS_FOLIA;
-    private static Method getGlobalRegionSchedulerMethod;
-    private static Method getAsyncSchedulerMethod;
-    private static Method getEntitySchedulerMethod;
-    private static Method runDelayedMethod;
-    private static Method runAtFixedRateMethod;
-    private static Method runDelayedAsyncMethod;
-    private static Method runAtFixedRateAsyncMethod;
-    private static Object globalRegionScheduler;
-    private static Object asyncScheduler;
 
     static {
+        // 简单高效的 Folia 检测
         boolean isFolia = false;
         try {
-            Class.forName("io.papermc.paper.threadedregions.scheduler.GlobalRegionScheduler");
-            isFolia = true;
-            
-            // 获取 Folia 调度器相关的方法和对象
-            Class<?> serverClass = Class.forName("org.bukkit.Bukkit");
-            getGlobalRegionSchedulerMethod = serverClass.getMethod("getGlobalRegionScheduler");
-            getAsyncSchedulerMethod = serverClass.getMethod("getAsyncScheduler");
-            getEntitySchedulerMethod = Entity.class.getMethod("getScheduler");
-            
-            globalRegionScheduler = getGlobalRegionSchedulerMethod.invoke(null);
-            asyncScheduler = getAsyncSchedulerMethod.invoke(null);
-            
-            // 获取调度方法
-            Class<?> globalSchedulerClass = Class.forName("io.papermc.paper.threadedregions.scheduler.GlobalRegionScheduler");
-            Class<?> asyncSchedulerClass = Class.forName("io.papermc.paper.threadedregions.scheduler.AsyncScheduler");
-            
-            runDelayedMethod = globalSchedulerClass.getMethod("runDelayed", Plugin.class, Runnable.class, long.class);
-            runAtFixedRateMethod = globalSchedulerClass.getMethod("runAtFixedRate", Plugin.class, Runnable.class, long.class, long.class);
-            runDelayedAsyncMethod = asyncSchedulerClass.getMethod("runDelayed", Plugin.class, Runnable.class, long.class, TimeUnit.class);
-            runAtFixedRateAsyncMethod = asyncSchedulerClass.getMethod("runAtFixedRate", Plugin.class, Runnable.class, long.class, long.class, TimeUnit.class);
-            
+            isFolia = Class.forName("io.papermc.paper.threadedregions.RegionizedServer") != null;
         } catch (Exception e) {
-            // Folia 不可用，使用 Bukkit
+            // 不是 Folia
         }
         IS_FOLIA = isFolia;
     }
@@ -66,13 +37,11 @@ public class SchedulerAdapter {
      */
     public static BukkitTask runTask(Plugin plugin, Runnable task, long delay) {
         if (IS_FOLIA) {
-            try {
-                Object scheduledTask = runDelayedMethod.invoke(globalRegionScheduler, plugin, task, delay);
-                return new FoliaTaskWrapper(scheduledTask);
-            } catch (Exception e) {
-                plugin.getLogger().warning("Failed to schedule Folia task, falling back to Bukkit: " + e.getMessage());
-                return Bukkit.getScheduler().runTaskLater(plugin, task, delay);
+            if (delay <= 0) {
+                delay = 1;
             }
+            ScheduledTask scheduledTask = Bukkit.getGlobalRegionScheduler().runDelayed(plugin, scheduledTask1 -> task.run(), delay);
+            return new FoliaTaskWrapper(scheduledTask);
         } else {
             return Bukkit.getScheduler().runTaskLater(plugin, task, delay);
         }
@@ -82,7 +51,12 @@ public class SchedulerAdapter {
      * 运行同步任务（立即执行）
      */
     public static BukkitTask runTask(Plugin plugin, Runnable task) {
-        return runTask(plugin, task, 0L);
+        if (IS_FOLIA) {
+            Bukkit.getGlobalRegionScheduler().execute(plugin, task);
+            return new FoliaTaskWrapper(null); // 立即执行的任务没有返回值
+        } else {
+            return Bukkit.getScheduler().runTask(plugin, task);
+        }
     }
 
     /**
@@ -90,13 +64,8 @@ public class SchedulerAdapter {
      */
     public static BukkitTask runTaskTimer(Plugin plugin, Runnable task, long delay, long period) {
         if (IS_FOLIA) {
-            try {
-                Object scheduledTask = runAtFixedRateMethod.invoke(globalRegionScheduler, plugin, task, delay, period);
-                return new FoliaTaskWrapper(scheduledTask);
-            } catch (Exception e) {
-                plugin.getLogger().warning("Failed to schedule Folia timer task, falling back to Bukkit: " + e.getMessage());
-                return Bukkit.getScheduler().runTaskTimer(plugin, task, delay, period);
-            }
+            ScheduledTask scheduledTask = Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin, scheduledTask1 -> task.run(), delay, period);
+            return new FoliaTaskWrapper(scheduledTask);
         } else {
             return Bukkit.getScheduler().runTaskTimer(plugin, task, delay, period);
         }
@@ -107,15 +76,10 @@ public class SchedulerAdapter {
      */
     public static BukkitTask runTaskAsynchronously(Plugin plugin, Runnable task, long delay) {
         if (IS_FOLIA) {
-            try {
-                // Folia 中异步任务延迟单位是毫秒
-                long delayMs = delay * 50; // 1 tick = 50ms
-                Object scheduledTask = runDelayedAsyncMethod.invoke(asyncScheduler, plugin, task, delayMs, TimeUnit.MILLISECONDS);
-                return new FoliaTaskWrapper(scheduledTask);
-            } catch (Exception e) {
-                plugin.getLogger().warning("Failed to schedule Folia async task, falling back to Bukkit: " + e.getMessage());
-                return Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, task, delay);
-            }
+            // Folia 中异步任务延迟单位是毫秒
+            long delayMs = delay * 50; // 1 tick = 50ms
+            ScheduledTask scheduledTask = Bukkit.getAsyncScheduler().runDelayed(plugin, scheduledTask1 -> task.run(), delayMs, TimeUnit.MILLISECONDS);
+            return new FoliaTaskWrapper(scheduledTask);
         } else {
             return Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, task, delay);
         }
@@ -125,7 +89,12 @@ public class SchedulerAdapter {
      * 运行异步任务（立即执行）
      */
     public static BukkitTask runTaskAsynchronously(Plugin plugin, Runnable task) {
-        return runTaskAsynchronously(plugin, task, 0L);
+        if (IS_FOLIA) {
+            Bukkit.getAsyncScheduler().runNow(plugin, scheduledTask -> task.run());
+            return new FoliaTaskWrapper(null); // 立即执行的任务没有返回值
+        } else {
+            return Bukkit.getScheduler().runTaskAsynchronously(plugin, task);
+        }
     }
 
     /**
@@ -133,16 +102,11 @@ public class SchedulerAdapter {
      */
     public static BukkitTask runTaskTimerAsynchronously(Plugin plugin, Runnable task, long delay, long period) {
         if (IS_FOLIA) {
-            try {
-                // Folia 中异步任务延迟和周期单位是毫秒
-                long delayMs = delay * 50; // 1 tick = 50ms
-                long periodMs = period * 50; // 1 tick = 50ms
-                Object scheduledTask = runAtFixedRateAsyncMethod.invoke(asyncScheduler, plugin, task, delayMs, periodMs, TimeUnit.MILLISECONDS);
-                return new FoliaTaskWrapper(scheduledTask);
-            } catch (Exception e) {
-                plugin.getLogger().warning("Failed to schedule Folia async timer task, falling back to Bukkit: " + e.getMessage());
-                return Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, task, delay, period);
-            }
+            // Folia 中异步任务延迟和周期单位是毫秒
+            long delayMs = delay * 50; // 1 tick = 50ms
+            long periodMs = period * 50; // 1 tick = 50ms
+            ScheduledTask scheduledTask = Bukkit.getAsyncScheduler().runAtFixedRate(plugin, scheduledTask1 -> task.run(), delayMs, periodMs, TimeUnit.MILLISECONDS);
+            return new FoliaTaskWrapper(scheduledTask);
         } else {
             return Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, task, delay, period);
         }
@@ -152,11 +116,11 @@ public class SchedulerAdapter {
      * Folia 任务包装器，用于兼容 BukkitTask 接口
      */
     private static class FoliaTaskWrapper implements BukkitTask {
-        private final Object foliaTask;
+        private final ScheduledTask scheduledTask;
         private boolean cancelled = false;
 
-        public FoliaTaskWrapper(Object foliaTask) {
-            this.foliaTask = foliaTask;
+        public FoliaTaskWrapper(ScheduledTask scheduledTask) {
+            this.scheduledTask = scheduledTask;
         }
 
         @Override
@@ -176,19 +140,14 @@ public class SchedulerAdapter {
 
         @Override
         public boolean isCancelled() {
-            return cancelled;
+            return cancelled || (scheduledTask != null && scheduledTask.isCancelled());
         }
 
         @Override
         public void cancel() {
-            if (foliaTask != null && !cancelled) {
-                try {
-                    Method cancelMethod = foliaTask.getClass().getMethod("cancel");
-                    cancelMethod.invoke(foliaTask);
-                    cancelled = true;
-                } catch (Exception e) {
-                    // 忽略取消失败
-                }
+            if (scheduledTask != null && !cancelled) {
+                scheduledTask.cancel();
+                cancelled = true;
             }
         }
     }
